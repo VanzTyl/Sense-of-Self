@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Ghost, Zap, Shield, User, Info, Quote, ShoppingBag, Users, Sparkles } from 'lucide-react';
+import { ArrowLeft, User, Info, ShoppingBag, Users, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 
 interface SoulCardProps {
   title: string;
@@ -187,6 +188,31 @@ export default function App() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [isQuoteVisible, setIsQuoteVisible] = useState(false);
   const [isDialogueVisible, setIsDialogueVisible] = useState(false);
+  const [showUnlockToast, setShowUnlockToast] = useState(false);
+
+  useEffect(() => {
+    // 1. Get current list of visited pages to avoid double-counting the same page
+    const visited = JSON.parse(localStorage.getItem('visited_selves') || '[]');
+    const currentPage = window.location.pathname;
+
+    if (!visited.includes(currentPage)) {
+        const updatedVisited = [...visited, currentPage];
+        localStorage.setItem('visited_selves', JSON.stringify(updatedVisited));
+        
+        // 2. Update the integer count
+        const newCount = updatedVisited.length;
+        localStorage.setItem('hasUnlocked', newCount.toString());
+
+        // 3. Trigger toast if this is the 4th unique page
+        if (newCount === 4) {
+        setShowUnlockToast(true);
+        }
+    } else {
+        // Check if they already hit 4 in a previous session to show toast again or keep it available
+        const currentCount = parseInt(localStorage.getItem('hasUnlocked') || '0');
+        if (currentCount >= 4) setShowUnlockToast(true);
+    }
+    }, []);
 
   useEffect(() => {
     setTimeout(() => setIsHeaderVisible(true), 200);
@@ -367,6 +393,38 @@ export default function App() {
       </div>
 
       <div className="fixed bottom-10 left-10 w-32 h-32 border border-white/5 rotate-45 pointer-events-none opacity-20"></div>
+
+      {showUnlockToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-bounce">
+            <Link href="/" className="group flex flex-col items-end gap-2">
+            <div className="bg-emerald-500 text-black px-4 py-3 rounded-none skew-x-[-12deg] font-black text-xs tracking-tighter shadow-[5px_5px_0px_0px_rgba(255,255,255,1)]">
+                You have unlocked the middle button at the home page
+            </div>
+            <div className="bg-white text-black text-[10px] px-2 py-1 uppercase font-bold">
+                Return to Home Page →
+            </div>
+            </Link>
+        </div>
+        )}
+
+        <div className="fixed bottom-8 left-8 z-[100]">
+            <Link href="/">
+                <button className="group relative flex items-center bg-black/60 hover:bg-white/10 backdrop-blur-md border border-white/20 hover:border-white/80 rounded-full h-12 w-12 hover:w-48 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden">
+                
+                {/* Arrow Icon Wrapper - Stays fixed on the left */}
+                <div className="absolute left-0 w-12 h-12 flex items-center justify-center shrink-0">
+                    <ArrowLeft className="w-5 h-5 text-white transition-transform duration-300 group-hover:-translate-x-1" />
+                </div>
+
+                {/* Hidden Text - Fades in and stays aligned */}
+                <span className="ml-12 opacity-0 group-hover:opacity-100 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all duration-300 delay-100">
+                    Return to Home
+                </span>
+                
+                </button>
+            </Link>
+        </div>
+
     </div>
   );
 }

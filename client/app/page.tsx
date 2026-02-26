@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Brain, Zap, Heart, UserCircle, Play } from 'lucide-react';
+import { Sparkles, Brain, Zap, Heart, UserCircle, Play, Lock } from 'lucide-react';
 
 /**
  * High-tech, glitchy Japanese "Isekai Status" Navigation
@@ -10,6 +10,7 @@ import { Sparkles, Brain, Zap, Heart, UserCircle, Play } from 'lucide-react';
  */
 
 export default function App() {
+  const [unlockCount, setUnlockCount] = useState(0); // Added for progression
   const [hoveredSegment, setHoveredSegment] = useState<number | null>(null);
   const [isMeHovered, setIsMeHovered] = useState(false);
   const [glitchActive, setGlitchActive] = useState(false);
@@ -119,6 +120,10 @@ export default function App() {
       setLoadProgress(100);
     }
     setStreamOpacities(Array.from({ length: 15 }).map(() => Math.random()));
+    
+    // Initial fetch of unlock count
+    const count = parseInt(localStorage.getItem('hasUnlocked') || '0');
+    setUnlockCount(count);
   }, []);
 
   // System Start Sequence
@@ -400,17 +405,31 @@ export default function App() {
               </button>
             ))}
 
+            {/* MODIFIED PROGRESS-BASED CENTER BUTTON */}
             <button 
-              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-black border-2 border-white/20 flex items-center justify-center z-30 transition-all duration-500 group overflow-hidden hover:border-emerald-400 hover:shadow-[0_0_30px_rgba(52,211,153,0.4)]
-                ${isMeHovered ? 'scale-110 opacity-100' : 'scale-[0.85] opacity-60'}
+              disabled={unlockCount < 4}
+              onClick={() => { if(unlockCount >= 4) window.location.href = "/reflection" }}
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full flex flex-col items-center justify-center z-30 transition-all duration-700
+                ${unlockCount >= 4 
+                  ? 'bg-black border-2 border-emerald-400 shadow-[0_0_30px_rgba(52,211,153,0.4)] cursor-pointer opacity-100 scale-100' 
+                  : 'bg-neutral-900 border border-white/10 cursor-not-allowed opacity-40 scale-[0.85]'
+                }
+                ${isMeHovered && unlockCount >= 4 ? 'scale-110' : ''}
               `}
               onMouseEnter={() => {
                 setIsMeHovered(true);
-                playHoverSound();
+                if(unlockCount >= 4) playHoverSound();
               }}
               onMouseLeave={() => setIsMeHovered(false)}
             >
-               <UserCircle className="w-4 h-4 md:w-6 md:h-6 text-emerald-400" />
+               {unlockCount >= 4 ? (
+                 <UserCircle className="w-6 h-6 md:w-8 md:h-8 text-emerald-400 animate-pulse" />
+               ) : (
+                 <>
+                   <Lock className="w-4 h-4 text-white/20 mb-1" />
+                   <span className="text-[10px] font-black text-white/40 tracking-tighter">{unlockCount}/4</span>
+                 </>
+               )}
             </button>
           </div>
         </div>
